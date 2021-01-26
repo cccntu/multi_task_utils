@@ -15,6 +15,10 @@ class TaskSamplingStrategy(Enum):
 
 
 def unlimited(iterator):
+    """
+    itertools.cycle will have the same data order for each epoch,
+    this allows shuffling at the start of each epoch
+    """
     while True:
         for x in iterator:
             yield x
@@ -66,18 +70,13 @@ class MultiTaskDataLoader(IterableDataset):
                 id = i % n
                 nxt = next(iterators[id])
                 yield nxt
-
         elif self.strategy == TaskSamplingStrategy.none:
             for dl in self.dataloaders:
                 for x in dl:
                     yield x
         elif self.strategy == TaskSamplingStrategy.parallel:
-            # return iter(zip(*self.dataloaders))
-            for batches in zip(*self.dataloaders):  # self.dataloaders:
+            for batches in zip(*self.dataloaders):
                 yield batches
-                # for x in dl:
-                #    yield x
-            # return zip(*self.dataloaders)
         else:
             NotImplementedError()
 
@@ -110,5 +109,4 @@ class MultiTaskDataModule(pl.LightningDataModule):
         )
 
 
-#     def test_dataloader(self):
-#         return DataLoader(self.testset, batch_size=8, collate_fn=self.data_collator)
+#    def test_dataloader(self):
